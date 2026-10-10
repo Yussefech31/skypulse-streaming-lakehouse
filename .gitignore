@@ -48,7 +48,7 @@ htmlcov/
 
 # Lakehouse local data & checkpoints
 data/raw/
-lakehouse/
+/lakehouse/
 checkpoints/
 .duckdb/
 *.parquet
