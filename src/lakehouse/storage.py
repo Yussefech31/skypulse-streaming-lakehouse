@@ -1,9 +1,11 @@
 """Lakehouse storage engine supporting MinIO S3 and local partitioned Parquet tables."""
 
 from __future__ import annotations
+
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -37,7 +39,7 @@ class LakehouseStorage:
         if not records:
             return None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         part_dir = (
             self.silver_dir
             / f"year={now.year}"
@@ -55,7 +57,9 @@ class LakehouseStorage:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_path, compression="snappy")
 
-        logger.debug("Wrote silver batch %s with %d records to %s", batch_name, len(records), file_path)
+        logger.debug(
+            "Wrote silver batch %s with %d records to %s", batch_name, len(records), file_path
+        )
         return file_path
 
     def write_gold_aggregations(
@@ -65,7 +69,7 @@ class LakehouseStorage:
         if not metrics:
             return None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         part_dir = self.gold_agg_dir / f"year={now.year}" / f"month={now.month:02d}"
         part_dir.mkdir(parents=True, exist_ok=True)
 
@@ -85,7 +89,7 @@ class LakehouseStorage:
         if not anomalies:
             return None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         part_dir = self.gold_anomalies_dir / f"year={now.year}" / f"month={now.month:02d}"
         part_dir.mkdir(parents=True, exist_ok=True)
 

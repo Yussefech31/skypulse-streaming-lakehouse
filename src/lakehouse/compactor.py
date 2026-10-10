@@ -1,10 +1,12 @@
 """Batch compaction worker for Lakehouse Parquet partitions."""
 
 from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -51,7 +53,8 @@ class LakehouseCompactor:
         """
         # Find all uncompacted batch files
         source_files = [
-            f for f in partition_dir.glob("telemetry_*.parquet")
+            f
+            for f in partition_dir.glob("telemetry_*.parquet")
             if not f.name.startswith("compacted_")
         ]
 
@@ -65,7 +68,7 @@ class LakehouseCompactor:
         total_records = len(merged_df)
 
         # Write consolidated file
-        compacted_ts = int(datetime.now(timezone.utc).timestamp())
+        compacted_ts = int(datetime.now(UTC).timestamp())
         compacted_path = partition_dir / f"compacted_{compacted_ts}.parquet"
         pq.write_table(merged_table, compacted_path, compression="zstd")
 
@@ -102,7 +105,7 @@ class LakehouseCompactor:
             return CompactionStats(0, 0, 0, 0, 0)
 
         # Leaf directories containing parquet files
-        leaf_dirs = set(p.parent for p in self.silver_dir.glob("**/*.parquet"))
+        leaf_dirs = {p.parent for p in self.silver_dir.glob("**/*.parquet")}
 
         for p_dir in leaf_dirs:
             f_count, r_count, b_before, b_after = self.compact_partition(p_dir)

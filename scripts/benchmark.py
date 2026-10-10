@@ -69,13 +69,15 @@ def run_comprehensive_benchmark():
         p99_ms = float(np.percentile(batch_latencies, 99))
         throughput_eps = float(b_size / (avg_lat_ms / 1000.0))
 
-        throughput_results.append({
-            "batch_size": b_size,
-            "throughput_events_per_sec": round(throughput_eps, 1),
-            "latency_p50_ms": round(p50_ms, 2),
-            "latency_p95_ms": round(p95_ms, 2),
-            "latency_p99_ms": round(p99_ms, 2),
-        })
+        throughput_results.append(
+            {
+                "batch_size": b_size,
+                "throughput_events_per_sec": round(throughput_eps, 1),
+                "latency_p50_ms": round(p50_ms, 2),
+                "latency_p95_ms": round(p95_ms, 2),
+                "latency_p99_ms": round(p99_ms, 2),
+            }
+        )
         latencies_per_batch[b_size] = {
             "p50": p50_ms,
             "p95": p95_ms,
@@ -98,7 +100,7 @@ def run_comprehensive_benchmark():
     num_micro_batches = 15
     for i in range(num_micro_batches):
         mb = test_records[i * 200 : (i + 1) * 200]
-        storage.write_silver_batch(mb, batch_id=f"bench_mb_{i+1}")
+        storage.write_silver_batch(mb, batch_id=f"bench_mb_{i + 1}")
 
     compactor = LakehouseCompactor(base_dir=BENCHMARK_LAKEHOUSE)
     t_comp_start = time.perf_counter()
@@ -221,12 +223,29 @@ def generate_benchmark_plots(throughput_data, comp_metric, dq_metric):
     # Subplot 3: Lakehouse Storage Compaction Footprint
     ax3 = axes[1, 0]
     sizes_kb = [comp_metric["bytes_before"] / 1024.0, comp_metric["bytes_after"] / 1024.0]
-    bars = ax3.bar(["Before Compaction\n(15 micro-batches)", "After Compaction\n(1 consolidated partition)"], sizes_kb, color=["#f43f5e", "#10b981"], width=0.5)
-    ax3.set_title(f"Storage Footprint Optimization ({comp_metric['savings_percent']}% Reduction)", fontsize=12, fontweight="bold")
+    bars = ax3.bar(
+        ["Before Compaction\n(15 micro-batches)", "After Compaction\n(1 consolidated partition)"],
+        sizes_kb,
+        color=["#f43f5e", "#10b981"],
+        width=0.5,
+    )
+    ax3.set_title(
+        f"Storage Footprint Optimization ({comp_metric['savings_percent']}% Reduction)",
+        fontsize=12,
+        fontweight="bold",
+    )
     ax3.set_ylabel("Storage Size (KB)")
     for bar in bars:
         h = bar.get_height()
-        ax3.annotate(f"{h:.1f} KB", (bar.get_x() + bar.get_width() / 2, h), textcoords="offset points", xytext=(0, 5), ha="center", color="#f0f6fc", fontsize=10)
+        ax3.annotate(
+            f"{h:.1f} KB",
+            (bar.get_x() + bar.get_width() / 2, h),
+            textcoords="offset points",
+            xytext=(0, 5),
+            ha="center",
+            color="#f0f6fc",
+            fontsize=10,
+        )
 
     # Subplot 4: Data Quality Assertion Verification
     ax4 = axes[1, 1]
@@ -240,7 +259,15 @@ def generate_benchmark_plots(throughput_data, comp_metric, dq_metric):
     ax4.set_ylabel("Value")
     for bar in bars_dq:
         h = bar.get_height()
-        ax4.annotate(f"{h:.1f}", (bar.get_x() + bar.get_width() / 2, h), textcoords="offset points", xytext=(0, 5), ha="center", color="#f0f6fc", fontsize=10)
+        ax4.annotate(
+            f"{h:.1f}",
+            (bar.get_x() + bar.get_width() / 2, h),
+            textcoords="offset points",
+            xytext=(0, 5),
+            ha="center",
+            color="#f0f6fc",
+            fontsize=10,
+        )
 
     plt.tight_layout()
     plot_path = RESULTS_DIR / "benchmark_throughput_latency.png"
