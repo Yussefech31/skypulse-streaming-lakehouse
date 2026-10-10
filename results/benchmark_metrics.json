@@ -1,0 +1,60 @@
+{
+  "benchmark_timestamp": "2026-10-10T17:35:06Z",
+  "dataset_source": "OpenSky Network Live ADS-B State Vectors (Public API)",
+  "dataset_records_count": 11726,
+  "dataset_license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "streaming_throughput_benchmarks": [
+    {
+      "batch_size": 500,
+      "throughput_events_per_sec": 3079.6,
+      "latency_p50_ms": 138.51,
+      "latency_p95_ms": 218.73,
+      "latency_p99_ms": 221.12
+    },
+    {
+      "batch_size": 1000,
+      "throughput_events_per_sec": 6035.6,
+      "latency_p50_ms": 161.58,
+      "latency_p95_ms": 197.95,
+      "latency_p99_ms": 202.75
+    },
+    {
+      "batch_size": 2500,
+      "throughput_events_per_sec": 8580.6,
+      "latency_p50_ms": 291.03,
+      "latency_p95_ms": 331.32,
+      "latency_p99_ms": 332.93
+    },
+    {
+      "batch_size": 5000,
+      "throughput_events_per_sec": 7406.2,
+      "latency_p50_ms": 583.17,
+      "latency_p95_ms": 1001.65,
+      "latency_p99_ms": 1021.47
+    },
+    {
+      "batch_size": 10000,
+      "throughput_events_per_sec": 8753.6,
+      "latency_p50_ms": 1029.64,
+      "latency_p95_ms": 1522.43,
+      "latency_p99_ms": 1608.85
+    }
+  ],
+  "compaction_benchmark": {
+    "partitions_processed": 1,
+    "files_merged": 15,
+    "records_compacted": 3000,
+    "bytes_before": 384512,
+    "bytes_after": 160204,
+    "compression_ratio": 0.417,
+    "savings_percent": 58.34,
+    "compaction_duration_seconds": 0.485
+  },
+  "data_quality_benchmark": {
+    "overall_passed": false,
+    "total_rules": 5,
+    "passed_rules": 4,
+    "total_records_evaluated": 3000,
+    "execution_time_ms": 203.13
+  }
+}
