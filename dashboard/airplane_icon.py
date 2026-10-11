@@ -107,6 +107,23 @@ def enrich_flight_routes_and_airports(df: pd.DataFrame) -> pd.DataFrame:
         track = row.get("true_track") or 0.0
 
         if pd.isna(lat) or pd.isna(lon):
+            orig_iatas.append("N/A")
+            orig_names.append("Unknown")
+            orig_cities.append("Unknown")
+            orig_countries.append("Unknown")
+            orig_lats.append(0.0)
+            orig_lons.append(0.0)
+            dest_iatas.append("N/A")
+            dest_names.append("Unknown")
+            dest_cities.append("Unknown")
+            dest_countries.append("Unknown")
+            dest_lats.append(0.0)
+            dest_lons.append(0.0)
+            airlines.append("General Aviation")
+            route_labels.append("N/A")
+            dist_to_dests.append(0.0)
+            total_dists.append(0.0)
+            progress_pcts.append(0.0)
             continue
 
         orig, dest, airline = resolve_flight_route(
