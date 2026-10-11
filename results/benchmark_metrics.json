@@ -1,60 +1,60 @@
 {
-  "benchmark_timestamp": "2026-10-10T17:35:06Z",
+  "benchmark_timestamp": "2026-10-11T00:28:37Z",
   "dataset_source": "OpenSky Network Live ADS-B State Vectors (Public API)",
-  "dataset_records_count": 11726,
+  "dataset_records_count": 7158,
   "dataset_license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
   "streaming_throughput_benchmarks": [
     {
       "batch_size": 500,
-      "throughput_events_per_sec": 3079.6,
-      "latency_p50_ms": 138.51,
-      "latency_p95_ms": 218.73,
-      "latency_p99_ms": 221.12
+      "throughput_events_per_sec": 10167.1,
+      "latency_p50_ms": 46.17,
+      "latency_p95_ms": 59.33,
+      "latency_p99_ms": 61.59
     },
     {
       "batch_size": 1000,
-      "throughput_events_per_sec": 6035.6,
-      "latency_p50_ms": 161.58,
-      "latency_p95_ms": 197.95,
-      "latency_p99_ms": 202.75
+      "throughput_events_per_sec": 18245.2,
+      "latency_p50_ms": 54.83,
+      "latency_p95_ms": 55.4,
+      "latency_p99_ms": 55.45
     },
     {
       "batch_size": 2500,
-      "throughput_events_per_sec": 8580.6,
-      "latency_p50_ms": 291.03,
-      "latency_p95_ms": 331.32,
-      "latency_p99_ms": 332.93
+      "throughput_events_per_sec": 22482.0,
+      "latency_p50_ms": 106.81,
+      "latency_p95_ms": 123.19,
+      "latency_p99_ms": 125.48
     },
     {
       "batch_size": 5000,
-      "throughput_events_per_sec": 7406.2,
-      "latency_p50_ms": 583.17,
-      "latency_p95_ms": 1001.65,
-      "latency_p99_ms": 1021.47
+      "throughput_events_per_sec": 31104.0,
+      "latency_p50_ms": 155.9,
+      "latency_p95_ms": 175.28,
+      "latency_p99_ms": 178.08
     },
     {
       "batch_size": 10000,
-      "throughput_events_per_sec": 8753.6,
-      "latency_p50_ms": 1029.64,
-      "latency_p95_ms": 1522.43,
-      "latency_p99_ms": 1608.85
+      "throughput_events_per_sec": 45574.8,
+      "latency_p50_ms": 213.7,
+      "latency_p95_ms": 241.12,
+      "latency_p99_ms": 246.42
     }
   ],
   "compaction_benchmark": {
     "partitions_processed": 1,
     "files_merged": 15,
     "records_compacted": 3000,
-    "bytes_before": 384512,
-    "bytes_after": 160204,
-    "compression_ratio": 0.417,
-    "savings_percent": 58.34,
-    "compaction_duration_seconds": 0.485
+    "bytes_before": 383538,
+    "bytes_after": 158151,
+    "compression_ratio": 0.412,
+    "savings_percent": 58.77,
+    "compaction_duration_seconds": 0.571
   },
   "data_quality_benchmark": {
     "overall_passed": false,
     "total_rules": 5,
     "passed_rules": 4,
     "total_records_evaluated": 3000,
-    "execution_time_ms": 203.13
+    "execution_time_ms": 101.75
   }
 }
