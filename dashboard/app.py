@@ -7,8 +7,8 @@ import pydeck as pdk
 import streamlit as st
 
 from dashboard.airplane_icon import (
-    AIRPLANE_ICON_DATA_URI,
     AIRPLANE_ICON_MAPPING,
+    AIRPLANE_ICON_URL,
     project_destination_coordinates,
 )
 from src.ingestion.opensky_client import OpenSkyClient
@@ -132,6 +132,30 @@ def main():
 
     # Geodetic destination calculations & rotation heading angles
     map_df = project_destination_coordinates(map_df, default_distance_km=lookahead_km)
+
+    # Prune map data to required display attributes for high performance
+    display_cols = [
+        "longitude",
+        "latitude",
+        "dest_longitude",
+        "dest_latitude",
+        "deck_angle",
+        "plane_color",
+        "icon",
+        "callsign",
+        "icao24",
+        "origin_country",
+        "baro_altitude",
+        "altitude_ft",
+        "velocity_kmh",
+        "velocity_kts",
+        "heading_deg",
+        "vertical_rate",
+        "proj_distance_km",
+        "on_ground",
+    ]
+    avail_cols = [c for c in display_cols if c in map_df.columns]
+    map_df = map_df[avail_cols].copy()
     airborne_df = map_df[~map_df["on_ground"].fillna(False)].copy()
 
     # KPI Top Row
@@ -208,7 +232,7 @@ def main():
     plane_layer = pdk.Layer(
         "IconLayer",
         data=map_df,
-        icon_atlas=AIRPLANE_ICON_DATA_URI,
+        icon_atlas=AIRPLANE_ICON_URL,
         icon_mapping=AIRPLANE_ICON_MAPPING,
         get_icon="icon",
         get_position=["longitude", "latitude"],

@@ -74,8 +74,10 @@ def generate_airplane_icon_b64(
     return f"data:image/png;base64,{b64}"
 
 
-# Global cached icon atlas & mapping
-AIRPLANE_ICON_DATA_URI = generate_airplane_icon_b64(size=64)
+# Public CORS-enabled HTTPS URL for aircraft icon atlas
+AIRPLANE_ICON_URL = (
+    "https://raw.githubusercontent.com/Yussefech31/skypulse-streaming-lakehouse/main/dashboard/airplane_icon.png"
+)
 
 AIRPLANE_ICON_MAPPING = {
     "airplane": {
