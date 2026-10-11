@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 from io import BytesIO
 
-import numpy as np
 import pandas as pd
 from PIL import Image, ImageDraw
 
@@ -92,56 +91,84 @@ AIRPLANE_ICON_MAPPING = {
 }
 
 
-def project_destination_coordinates(
-    df: pd.DataFrame,
-    default_distance_km: float = 200.0,
-) -> pd.DataFrame:
-    """Project destination coordinates along each aircraft's heading using Great Circle geodesy."""
+def enrich_flight_routes_and_airports(df: pd.DataFrame) -> pd.DataFrame:
+    """Enrich each flight with real Origin & Destination airports, airline name, and coordinates."""
+    from dashboard.airports import haversine_distance_km, resolve_flight_route
+
     res_df = df.copy()
 
-    # Earth radius in kilometers
-    r_earth = 6371.0
+    orig_iatas, orig_names, orig_cities, orig_countries, orig_lats, orig_lons = [], [], [], [], [], []
+    dest_iatas, dest_names, dest_cities, dest_countries, dest_lats, dest_lons = [], [], [], [], [], []
+    airlines, route_labels, dist_to_dests, total_dists, progress_pcts = [], [], [], [], []
 
-    # Dynamic lookahead distance proportional to velocity if available, else default
-    if "velocity" in res_df.columns:
-        # velocity in m/s -> km in 20 minutes: v * 1.2
-        vel = res_df["velocity"].fillna(200.0)
-        dist_km = np.clip(vel * 1.2, 80.0, 450.0)
-    else:
-        dist_km = np.full(len(res_df), default_distance_km)
+    for _, row in res_df.iterrows():
+        lat = row.get("latitude")
+        lon = row.get("longitude")
+        track = row.get("true_track") or 0.0
 
-    res_df["proj_distance_km"] = dist_km.round(1)
-    d_rad = dist_km / r_earth
+        if pd.isna(lat) or pd.isna(lon):
+            continue
 
-    lat_rad = np.radians(res_df["latitude"].fillna(0.0))
-    lon_rad = np.radians(res_df["longitude"].fillna(0.0))
+        orig, dest, airline = resolve_flight_route(
+            float(lat),
+            float(lon),
+            float(track),
+            callsign=str(row.get("callsign", "")),
+            origin_country=str(row.get("origin_country", "")),
+            altitude_m=float(row["baro_altitude"]) if pd.notna(row.get("baro_altitude")) else None,
+            vertical_rate=float(row["vertical_rate"]) if pd.notna(row.get("vertical_rate")) else None,
+        )
 
-    # Heading (track) in radians clockwise from North
-    track_deg = res_df["true_track"].fillna(0.0)
-    track_rad = np.radians(track_deg)
+        d_rem = haversine_distance_km(float(lat), float(lon), dest.latitude, dest.longitude)
+        d_tot = haversine_distance_km(orig.latitude, orig.longitude, dest.latitude, dest.longitude)
+        prog = min(max(((d_tot - d_rem) / max(d_tot, 1.0)) * 100.0, 5.0), 98.0)
 
-    # Great Circle destination formulas
-    dest_lat_rad = np.arcsin(
-        np.sin(lat_rad) * np.cos(d_rad)
-        + np.cos(lat_rad) * np.sin(d_rad) * np.cos(track_rad)
-    )
-    dest_lon_rad = lon_rad + np.arctan2(
-        np.sin(track_rad) * np.sin(d_rad) * np.cos(lat_rad),
-        np.cos(d_rad) - np.sin(lat_rad) * np.sin(dest_lat_rad),
-    )
+        orig_iatas.append(orig.iata)
+        orig_names.append(orig.name)
+        orig_cities.append(orig.city)
+        orig_countries.append(orig.country)
+        orig_lats.append(round(orig.latitude, 4))
+        orig_lons.append(round(orig.longitude, 4))
 
-    res_df["dest_latitude"] = np.degrees(dest_lat_rad).round(4)
-    res_df["dest_longitude"] = ((np.degrees(dest_lon_rad) + 540) % 360 - 180).round(4)
+        dest_iatas.append(dest.iata)
+        dest_names.append(dest.name)
+        dest_cities.append(dest.city)
+        dest_countries.append(dest.country)
+        dest_lats.append(round(dest.latitude, 4))
+        dest_lons.append(round(dest.longitude, 4))
+
+        airlines.append(airline)
+        route_labels.append(f"{orig.iata} ➔ {dest.iata}")
+        dist_to_dests.append(round(d_rem, 1))
+        total_dists.append(round(d_tot, 1))
+        progress_pcts.append(round(prog, 0))
+
+    res_df["orig_iata"] = orig_iatas
+    res_df["orig_name"] = orig_names
+    res_df["orig_city"] = orig_cities
+    res_df["orig_country"] = orig_countries
+    res_df["orig_latitude"] = orig_lats
+    res_df["orig_longitude"] = orig_lons
+
+    res_df["dest_iata"] = dest_iatas
+    res_df["dest_name"] = dest_names
+    res_df["dest_city"] = dest_cities
+    res_df["dest_country"] = dest_countries
+    res_df["dest_latitude"] = dest_lats
+    res_df["dest_longitude"] = dest_lons
+
+    res_df["airline_name"] = airlines
+    res_df["route_label"] = route_labels
+    res_df["dist_to_dest_km"] = dist_to_dests
+    res_df["total_route_km"] = total_dists
+    res_df["flight_progress_pct"] = progress_pcts
 
     # PyDeck angle: deck.gl rotates counter-clockwise from 0 (North).
-    # Heading is clockwise from North -> (360 - track_deg) % 360
-    res_df["deck_angle"] = (360.0 - track_deg) % 360.0
+    tracks = res_df["true_track"].fillna(0.0)
+    res_df["deck_angle"] = (360.0 - tracks) % 360.0
     res_df["icon"] = "airplane"
 
     # Color palette based on altitude:
-    # Low (< 3000m): Greenish-cyan [0, 255, 180, 240]
-    # Mid (3000-9000m): Electric Cyan [0, 210, 255, 240]
-    # High cruise (> 9000m): Bright Amber / Gold [255, 200, 60, 240]
     alts = res_df["baro_altitude"].fillna(0.0)
     colors = []
     for alt in alts:
@@ -153,10 +180,18 @@ def project_destination_coordinates(
             colors.append([255, 205, 50, 240])
     res_df["plane_color"] = colors
 
-    # Formatted columns for tooltip
+    # Units
     res_df["velocity_kmh"] = (res_df["velocity"].fillna(0) * 3.6).round(0).astype(int)
     res_df["velocity_kts"] = (res_df["velocity"].fillna(0) * 1.94384).round(0).astype(int)
     res_df["altitude_ft"] = (res_df["baro_altitude"].fillna(0) * 3.28084).round(0).astype(int)
-    res_df["heading_deg"] = track_deg.round(0).astype(int)
+    res_df["heading_deg"] = tracks.round(0).astype(int)
 
     return res_df
+
+
+def project_destination_coordinates(
+    df: pd.DataFrame,
+    default_distance_km: float = 200.0,
+) -> pd.DataFrame:
+    """Convenience alias using real airport route resolution."""
+    return enrich_flight_routes_and_airports(df)
